@@ -7,11 +7,13 @@ class FolderManager {
 
   FolderManager._internal();
 
-  final List<String> _folders = [];
+  final List<Map<String, String?>> _folders = [];
 
-  List<String> get folders => List.unmodifiable(_folders);
+  List<String> get folders => _folders.map((folder) => folder['name']!).toList();
 
-  void addFolder(String folder) {
-    _folders.add(folder);
+  List<Map<String, String?>> get folderDetails => List.unmodifiable(_folders);
+
+  void addFolder(String folder, {String? description}) {
+    _folders.add({'name': folder, 'description': description});
   }
 }
