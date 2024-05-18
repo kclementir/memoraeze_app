@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class FolderManager {
   static final FolderManager _instance = FolderManager._internal();
 
@@ -8,10 +11,17 @@ class FolderManager {
   FolderManager._internal();
 
   final List<Map<String, dynamic>> _folders = [];
+  List<Map<String, dynamic>> _allSets = []; // List to store all sets
 
   List<String> get folders => _folders.map((folder) => folder['name'] as String).toList();
 
   List<Map<String, dynamic>> get folderDetails => List.unmodifiable(_folders);
+
+  Future<void> loadAllSets() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> setsJson = prefs.getStringList('sets') ?? [];
+    _allSets = setsJson.map((s) => jsonDecode(s) as Map<String, dynamic>).toList();
+  }
 
   void addFolder(String folder, {String? description}) {
     _folders.add({'name': folder, 'description': description, 'sets': []});
@@ -32,6 +42,22 @@ class FolderManager {
     }
   }
 
+  void updateFolder(String oldName, String newName, {String? description}) {
+    for (var folder in _folders) {
+      if (folder['name'] == oldName) {
+        folder['name'] = newName;
+        if (description != null) {
+          folder['description'] = description;
+        }
+        break;
+      }
+    }
+  }
+
+  void removeFolder(String folderName) {
+    _folders.removeWhere((folder) => folder['name'] == folderName);
+  }
+
   bool _isSetInFolder(Map<String, dynamic> folder, String setTitle) {
     for (var set in folder['sets']) {
       if (set['title'] == setTitle) {
@@ -48,5 +74,9 @@ class FolderManager {
       }
     }
     return [];
+  }
+
+  List<Map<String, dynamic>> getAllSets() {
+    return _allSets;
   }
 }
