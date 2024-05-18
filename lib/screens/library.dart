@@ -4,6 +4,7 @@ import 'package:memoraeze_flashcard_app/screens/create.dart';
 import 'package:memoraeze_flashcard_app/classes/folder_manager.dart';
 import 'package:memoraeze_flashcard_app/models/flashcard.dart';
 import 'package:memoraeze_flashcard_app/views/flashcard_screen.dart';
+import 'package:memoraeze_flashcard_app/views/folder_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
@@ -23,7 +24,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   List<Map<String, dynamic>> _studySets = []; // List to store study sets
 
   // Getter to retrieve folders from FolderManager
-  List<Map<String, String?>> get folders => FolderManager().folderDetails;
+  List<Map<String, dynamic>> get folders => FolderManager().folderDetails;
 
   // Define color constants
   static const Color appBarColor = Color(0xFF2B4057);
@@ -50,97 +51,104 @@ class _LibraryScreenState extends State<LibraryScreen>
           return decoded;
         } else {
           logger.w("Data is not in the expected format: $decoded");
-          return <String,
-              dynamic>{}; // Return an empty map to maintain type integrity
+          return <String, dynamic>{}; // Return an empty map to maintain type integrity
         }
       }).toList();
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('Library',
-              style: TextStyle(
-                  color: primaryTextColor, fontWeight: FontWeight.bold)),
-          backgroundColor: appBarColor,
-          iconTheme: const IconThemeData(color: primaryTextColor),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: _handleAddAction, // Handle add button press
-            ),
-          ],
-          bottom: TabBar(
-            controller: _tabController,
-            labelColor: primaryTextColor,
-            unselectedLabelColor: unselectedLabelColor,
-            indicator: const BoxDecoration(
-              border:
-                  Border(bottom: BorderSide(color: highlightColor, width: 4.5)),
-            ),
-            tabs: const [
-              Tab(text: 'Study Sets'), // Tab for Study Sets
-              Tab(text: 'Folders'), // Tab for Folders
-            ],
-          ),
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text('Library',
+          style: TextStyle(
+              color: primaryTextColor, fontWeight: FontWeight.bold)),
+      backgroundColor: appBarColor,
+      iconTheme: const IconThemeData(color: primaryTextColor),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: _handleAddAction, // Handle add button press
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            // First Tab: Study Sets
-            ListView.builder(
-              itemCount: _studySets.length,
-              itemBuilder: (_, index) {
-                return GestureDetector(
-                  onTap: () {
-                    // Convert terms to FlashCard objects
-                    List<FlashCard> flashCards =
-                        _studySets[index]['terms'].map<FlashCard>((term) {
-                      return FlashCard(
-                        question: term['term'],
-                        answer: term['definition'],
-                        options: term['options'] ?? [],
-                        topic: _studySets[index][
-                            'title'], // 'title' is part of study set structure
-                      );
-                    }).toList();
-                    // Navigate to NewCard screen
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => NewCard(
-                        topicName: _studySets[index]['title'],
-                        typeOfTopic:
-                            'Study Set', // This can be dynamic based app's context
-                        flashCards: flashCards,
-                      ),
-                    ));
-                  },
-                  child: FolderBox(
-                    folderName: _studySets[index]['title'],
-                    description: '${_studySets[index]['terms'].length} terms',
-                    descriptionStyle:
-                        const TextStyle(color: primaryTextColor, fontSize: 12),
-                    showIcon: false, // No icon for study sets
+      ],
+      bottom: TabBar(
+        controller: _tabController,
+        labelColor: primaryTextColor,
+        unselectedLabelColor: unselectedLabelColor,
+        indicator: const BoxDecoration(
+          border:
+              Border(bottom: BorderSide(color: highlightColor, width: 4.5)),
+        ),
+        tabs: const [
+          Tab(text: 'Study Sets'), // Tab for Study Sets
+          Tab(text: 'Folders'), // Tab for Folders
+        ],
+      ),
+    ),
+    body: TabBarView(
+      controller: _tabController,
+      children: [
+        // First Tab: Study Sets
+        ListView.builder(
+          itemCount: _studySets.length,
+          itemBuilder: (_, index) {
+            return GestureDetector(
+              onTap: () {
+                // Convert terms to FlashCard objects
+                List<FlashCard> flashCards =
+                    _studySets[index]['terms'].map<FlashCard>((term) {
+                  return FlashCard(
+                    question: term['term'],
+                    answer: term['definition'],
+                    options: term['options'] ?? [],
+                    topic: _studySets[index]['title'], // 'title' is part of study set structure
+                  );
+                }).toList();
+                // Navigate to NewCard screen
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => NewCard(
+                    topicName: _studySets[index]['title'],
+                    typeOfTopic:
+                        'Study Set', // This can be dynamic based app's context
+                    flashCards: flashCards,
                   ),
-                );
+                ));
               },
-            ),
-
-            // Second Tab: Folders
-            ListView.builder(
-              itemCount: folders.length,
-              itemBuilder: (_, index) => FolderBox(
-                folderName: folders[index]['name']!,
-                description: folders[index]['description'],
+              child: FolderBox(
+                folderName: _studySets[index]['title'],
+                description: '${_studySets[index]['terms'].length} terms',
                 descriptionStyle:
                     const TextStyle(color: primaryTextColor, fontSize: 12),
+                showIcon: false, // No icon for study sets
+              ),
+            );
+          },
+        ),
+
+        // Second Tab: Folders
+        ListView.builder(
+          itemCount: folders.length,
+          itemBuilder: (_, index) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => FolderDetailsScreen(folderName: folders[index]['name']!),
+                ));
+              },
+              child: FolderBox(
+                folderName: folders[index]['name']!,
+                description: folders[index]['description'],
+                descriptionStyle: const TextStyle(color: primaryTextColor, fontSize: 12),
                 showIcon: true, // Show icon for folders
               ),
-            ),
-          ],
-        ));
-  }
+            );
+          },
+        ),
+      ],
+    ),
+  );
+}
 
   // Handle add button press based on the active tab
   void _handleAddAction() {
@@ -189,11 +197,12 @@ class _LibraryScreenState extends State<LibraryScreen>
                       color: highlightColor, fontWeight: FontWeight.bold)),
               onPressed: () {
                 if (newFolderName.isNotEmpty) {
-                  FolderManager().addFolder(newFolderName,
-                      description:
-                          newFolderDescription); // Add folder with description
+                  setState(() {
+                    FolderManager().addFolder(newFolderName,
+                        description:
+                            newFolderDescription); // Add folder with description
+                  });
                   Navigator.of(context).pop(); // Close dialog
-                  setState(() {}); // Refresh the UI to show the new folder
                 }
               },
             ),
@@ -228,7 +237,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 }
 
-// Widget for displaying folders
+// Widget for displaying folders and study sets
 class FolderBox extends StatelessWidget {
   final String folderName;
   final String? description;
