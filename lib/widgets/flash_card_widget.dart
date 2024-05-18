@@ -1,0 +1,217 @@
+import 'package:flip_card/flip_card.dart';
+import 'package:flutter/material.dart';
+
+class FlipCardsWidget extends StatelessWidget {
+  const FlipCardsWidget(
+      {super.key,
+      required this.bgColor,
+      required this.currentIndex,
+      required this.cardsLength,
+      required this.question,
+      required this.answer,
+      required this.currentTopic});
+
+  final Color bgColor;
+  final int currentIndex;
+  final int cardsLength;
+  final String question;
+  final String answer;
+  final String currentTopic;
+
+  @override
+  Widget build(BuildContext context) {
+    return FlipCard(
+      side: CardSide.FRONT,
+      front: Stack(
+        fit: StackFit.loose,
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: bgColor,
+              border: Border.all(color: Colors.white, width: 1.0), // Thin border around the flashcard
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.24),
+                  blurRadius: 20.0,
+                  offset: const Offset(0.0, 10.0),
+                  spreadRadius: 10,
+                  blurStyle: BlurStyle.outer,
+                )
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 20,
+                left: 15,
+                right: 15,
+                bottom: 5,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        currentTopic,
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                      ),
+                      Text(
+                        "$currentIndex/$cardsLength",
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Center(
+                    child: Text(
+                      answer, // Show definition on the front
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    "Tap to Flip",
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall!
+                        .copyWith(color: Colors.white),
+                  )
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: -120,
+            top: 30,
+            child: Container(
+              height: 200,
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: bgColor.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: -100,
+            bottom: 20,
+            child: Container(
+              height: 200,
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      back: Stack(
+        fit: StackFit.loose,
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: bgColor,
+              border: Border.all(color: Colors.white, width: 1.0), // Thin border around the flashcard
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Term",
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                      ),
+                      Text(
+                        "$currentIndex/$cardsLength",
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                              color: Colors.white,
+                              fontSize: 15,
+                            ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Center(
+                    child: Text(
+                      question, // Show term on the back
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            left: -120,
+            top: 50,
+            child: Container(
+              height: 200,
+              width: 200,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  height: 100,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
