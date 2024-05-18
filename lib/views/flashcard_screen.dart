@@ -19,10 +19,10 @@ class NewCard extends StatefulWidget {
   });
 
   @override
-  _NewCardState createState() => _NewCardState();
+  NewCardState createState() => NewCardState();
 }
 
-class _NewCardState extends State<NewCard> {
+class NewCardState extends State<NewCard> {
   late AppinioSwiperController _controller;
   late List<FlashCard> _shuffledFlashCards;
 
