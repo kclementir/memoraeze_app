@@ -2,8 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:memoraeze_flashcard_app/models/flashcard.dart';
 import 'package:memoraeze_flashcard_app/screens/create.dart';
+import 'package:memoraeze_flashcard_app/views/select_folders_screen.dart';
 import 'package:memoraeze_flashcard_app/widgets/flash_card_widget.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:memoraeze_flashcard_app/classes/folder_manager.dart';
 import 'dart:math';
 
 class NewCard extends StatefulWidget {
@@ -67,7 +69,8 @@ class NewCardState extends State<NewCard> {
                     leading: const Icon(Icons.folder, color: Colors.white),
                     title: const Text('Add to Folder', style: TextStyle(color: Colors.white)),
                     onTap: () {
-                      // Implement the Add to Folder functionality
+                      Navigator.of(context).pop(); // Close the bottom sheet
+                      _navigateToSelectFoldersScreen(context); // Show select folders screen
                     },
                   ),
                   ListTile(
@@ -105,6 +108,31 @@ class NewCardState extends State<NewCard> {
         );
       },
     );
+  }
+
+  void _navigateToSelectFoldersScreen(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => SelectFoldersScreen(
+        onFoldersSelected: (selectedFolders) {
+          for (var folder in selectedFolders) {
+            FolderManager().addSetToFolder(folder, {
+              'title': widget.topicName,
+              'description': widget.typeOfTopic,
+              'terms': widget.flashCards.map((card) => {
+                'term': card.question,
+                'definition': card.answer,
+              }).toList(),
+            });
+          }
+          // Show confirmation message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added to ${selectedFolders.join(', ')} successfully!'),
+            ),
+          );
+        },
+      ),
+    ));
   }
 
   void _showDeleteConfirmationDialog() {
