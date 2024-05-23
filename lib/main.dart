@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+//import 'package:firebase_core/firebase_core.dart';
 import 'screens/home.dart';
 import 'screens/notes.dart';
 import 'screens/create.dart';
 import 'screens/library.dart';
 import 'screens/profile.dart';
+import 'screens/login.dart'; // Import LoginScreen
+import 'screens/create_account.dart'; // Import CreateAccountScreen
 import 'classes/folder_manager.dart'; // Import the FolderManager
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  //await Firebase.initializeApp();
   runApp(const MyApp());
 }
 
@@ -36,28 +41,36 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   static final List<Widget> _widgetOptions = <Widget>[
-    const HomeScreen(),
+    HomeScreen(),
     const NotesScreen(),
     const CreateSetScreen(),
     const LibraryScreen(),
-    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 4) {
+      _scaffoldKey.currentState?.openEndDrawer();
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+        child: _selectedIndex < 4
+            ? _widgetOptions.elementAt(_selectedIndex)
+            : const SizedBox.shrink(),
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
+      endDrawer: _buildProfileDrawer(context),
     );
   }
 
@@ -79,7 +92,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       unselectedLabelStyle: const TextStyle(color: Color(0xFF306C97)),
       onTap: (index) {
         if (index == 2) {
-          // If "Create" is tapped
           _showCreateDrawer(context);
         } else {
           _onItemTapped(index);
@@ -110,19 +122,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 children: <Widget>[
                   Container(
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10), // Enhanced touch area
-                    child: const Icon(Icons.drag_handle_rounded,
-                        size: 36, color: Color(0xFFC3D1DB)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: const Icon(Icons.drag_handle_rounded, size: 36, color: Color(0xFFC3D1DB)),
                   ),
-                  SizedBox(
-                      height: MediaQuery.of(context).size.height *
-                          0.01), // Responsive vertical spacing
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                   Container(
                     padding: EdgeInsets.symmetric(
                       vertical: 8,
-                      horizontal: MediaQuery.of(context).size.width *
-                          0.02, // Responsive horizontal padding
+                      horizontal: MediaQuery.of(context).size.width * 0.02,
                     ),
                     child: Column(
                       children: [
@@ -131,26 +138,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           title: 'Study Set',
                           onTap: () {
                             Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CreateSetScreen())); // Navigate to CreateSetScreen
+                              context,
+                              MaterialPageRoute(builder: (context) => const CreateSetScreen()),
+                            );
                           },
                         ),
-                        SizedBox(
-                            height: MediaQuery.of(context).size.height *
-                                0.02), // Responsive spacing between options
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                         _buildOptionContainer(
                           leadingIcon: Icons.folder_open_rounded,
                           title: 'Folder',
                           onTap: () {
-                            Navigator.pop(context); // Close the drawer
-                            _showFolderDialog(context); // Then show the folder dialog
+                            Navigator.pop(context);
+                            _showFolderDialog(context);
                           },
                         ),
-                        SizedBox(
-                            height: MediaQuery.of(context).size.height *
-                                0.01), // Space below the folder similar to the handle bar
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                       ],
                     ),
                   ),
@@ -174,8 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         height: 60,
         padding: EdgeInsets.symmetric(
           vertical: 20,
-          horizontal: MediaQuery.of(context).size.width *
-              0.04, // Adjusted for responsive design
+          horizontal: MediaQuery.of(context).size.width * 0.04,
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF102F50),
@@ -184,9 +185,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Row(
           children: [
             Icon(leadingIcon, color: const Color(0xFFC3D1DB)),
-            SizedBox(
-                width: MediaQuery.of(context).size.width *
-                    0.03), // Responsive spacing
+            SizedBox(width: MediaQuery.of(context).size.width * 0.03),
             Text(title, style: const TextStyle(color: Color(0xFFC3D1DB))),
           ],
         ),
@@ -205,10 +204,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          title: const Text(
-            'Create folder',
-            style: TextStyle(color: Color(0xFFC3D1DB)),
-          ),
+          title: const Text('Create folder', style: TextStyle(color: Color(0xFFC3D1DB))),
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
@@ -218,7 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     hintText: 'Folder name',
                     hintStyle: TextStyle(color: const Color(0xFFC3D1DB).withOpacity(0.6)),
                     enabledBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white), // Changed to white when not selected
+                      borderSide: BorderSide(color: Colors.white),
                     ),
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF59A6BF)),
@@ -233,7 +229,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     hintText: 'Description (optional)',
                     hintStyle: TextStyle(color: const Color(0xFFC3D1DB).withOpacity(0.6)),
                     enabledBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white), // Changed to white when not selecStep 4: LibraryScreen (library.dart)ted
+                      borderSide: BorderSide(color: Colors.white),
                     ),
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(color: Color(0xFF59A6BF)),
@@ -264,6 +260,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildProfileDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+            ),
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
+            child: Container(
+              height: kToolbarHeight,
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(16),
+              child: const Text('User Profile', style: TextStyle(color: Colors.white, fontSize: 24)),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.login),
+            title: const Text('Login'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }
