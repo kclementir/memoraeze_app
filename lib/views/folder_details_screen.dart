@@ -22,21 +22,10 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF2B4057),
         title: Text(widget.folderName, style: const TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           PopupMenuButton<String>(
-            onSelected: (value) {
-              switch (value) {
-                case 'Edit':
-                  _showEditFolderDialog(context);
-                  break;
-                case 'Add Sets':
-                  _navigateToAddSets(context);
-                  break;
-                case 'Delete':
-                  _showDeleteConfirmationDialog(context);
-                  break;
-              }
-            },
+            onSelected: _handleMenuSelection,
             itemBuilder: (BuildContext context) {
               return {'Edit', 'Add Sets', 'Delete'}.map((String choice) {
                 return PopupMenuItem<String>(
@@ -52,12 +41,19 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
         itemCount: folderDetails.length,
         itemBuilder: (context, index) {
           final set = folderDetails[index];
-          return Card(
-            margin: const EdgeInsets.all(8.0),
-            color: const Color(0xFF102F50),
-            child: ListTile(
-              title: Text(set['title'], style: const TextStyle(color: Colors.white)),
-              subtitle: Text('${set['terms'].length} terms', style: const TextStyle(color: Colors.white)),
+          return Dismissible(
+            key: Key('${set['title']} $index'),
+            background: _buildDismissBackground(),
+            direction: DismissDirection.endToStart,
+            onDismissed: (direction) {
+              setState(() {
+                FolderManager().removeSetFromFolder(widget.folderName, set['title']);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Set ${set['title']} removed')),
+              );
+            },
+            child: GestureDetector(
               onTap: () {
                 List<FlashCard> flashCards = set['terms'].map<FlashCard>((term) {
                   return FlashCard(
@@ -75,6 +71,12 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
                   ),
                 ));
               },
+              child: FolderBox(
+                folderName: set['title'],
+                description: '${set['terms'].length} terms',
+                descriptionStyle: const TextStyle(color: Color(0xFFC3D1DB), fontSize: 12),
+                showIcon: false,
+              ),
             ),
           );
         },
@@ -82,6 +84,22 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
     );
   }
 
+  // Handle menu selection from the AppBar
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'Edit':
+        _showEditFolderDialog(context);
+        break;
+      case 'Add Sets':
+        _navigateToAddSets(context);
+        break;
+      case 'Delete':
+        _showDeleteConfirmationDialog(context);
+        break;
+    }
+  }
+
+  // Show dialog to edit folder details
   void _showEditFolderDialog(BuildContext context) {
     String newFolderName = widget.folderName;
     String? newFolderDescription;
@@ -91,33 +109,26 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF2B4057),
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12))),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
           title: const Text('Edit folder', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              _buildTextField('Folder name', initialValue: newFolderName,
-                  onChanged: (value) => newFolderName = value),
+              _buildTextField('Folder name', initialValue: newFolderName, onChanged: (value) => newFolderName = value),
               const SizedBox(height: 20),
-              _buildTextField('Description (optional)',
-                  initialValue: newFolderDescription,
-                  onChanged: (value) => newFolderDescription = value),
+              _buildTextField('Description (optional)', initialValue: newFolderDescription, onChanged: (value) => newFolderDescription = value),
             ],
           ),
           actions: [
             TextButton(
-              child: const Text('CANCEL',
-                  style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
+              child: const Text('CANCEL', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
               onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
-              child: const Text('SAVE',
-                  style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
+              child: const Text('SAVE', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
               onPressed: () {
                 setState(() {
-                  FolderManager().updateFolder(widget.folderName, newFolderName,
-                      description: newFolderDescription);
+                  FolderManager().updateFolder(widget.folderName, newFolderName, description: newFolderDescription);
                 });
                 Navigator.of(context).pop();
               },
@@ -128,6 +139,45 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
     );
   }
 
+  // Navigate to the screen to add sets
+  void _navigateToAddSets(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      builder: (context) => AddSetsScreen(folderName: widget.folderName),
+    ));
+  }
+
+  // Show confirmation dialog to delete the folder
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2B4057),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          title: const Text('Confirm Deletion', style: TextStyle(color: Colors.white)),
+          content: const Text('Are you sure you want to delete this folder permanently? The sets will not be deleted.', style: TextStyle(color: Colors.white)),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Color.fromARGB(255, 172, 70, 70), fontWeight: FontWeight.bold)),
+              onPressed: () {
+                setState(() {
+                  FolderManager().removeFolder(widget.folderName);
+                });
+                Navigator.of(context).pop(); // Dismiss the dialog
+                Navigator.of(context).pop(); // Go back to the previous screen
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Build a text field widget
   Widget _buildTextField(String hintText, {required void Function(String) onChanged, String? initialValue}) {
     return TextField(
       onChanged: onChanged,
@@ -143,44 +193,38 @@ class _FolderDetailsScreenState extends State<FolderDetailsScreen> {
     );
   }
 
-  void _navigateToAddSets(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => AddSetsScreen(folderName: widget.folderName),
-    ));
+  // Build dismiss background widget for Dismissible
+  Widget _buildDismissBackground() {
+    return Container(
+      color: Colors.red,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      child: const Icon(Icons.delete, color: Colors.white, size: 36),
+    );
   }
+}
 
-  void _showDeleteConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF2B4057),
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          title: const Text('Confirm Deletion', style: TextStyle(color: Colors.white)),
-          content: const Text(
-            'Are you sure you want to delete this folder permanently? The sets will not be deleted.',
-            style: TextStyle(color: Colors.white),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
-              onPressed: () {
-                Navigator.of(context).pop(); // Dismiss the dialog
-              },
-            ),
-            TextButton(
-              child: const Text('Delete', style: TextStyle(color: Color.fromARGB(255, 172, 70, 70), fontWeight: FontWeight.bold)),
-              onPressed: () {
-                setState(() {
-                  FolderManager().removeFolder(widget.folderName);
-                });
-                Navigator.of(context).pop(); // Dismiss the dialog
-                Navigator.of(context).pop(); // Go back to the previous screen
-              },
-            ),
-          ],
-        );
-      },
+class FolderBox extends StatelessWidget {
+  final String folderName;
+  final String? description;
+  final TextStyle? descriptionStyle;
+  final bool showIcon;
+
+  const FolderBox({super.key, required this.folderName, this.description, this.descriptionStyle, this.showIcon = true});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2B4057),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: showIcon ? const Icon(Icons.folder_outlined, color: Color(0xFFC3D1DB)) : null,
+        title: Text(folderName, style: const TextStyle(color: Color(0xFFC3D1DB))),
+        subtitle: description != null ? Text(description!, style: descriptionStyle ?? const TextStyle(color: Color(0xFFC3D1DB))) : null,
+      ),
     );
   }
 }
