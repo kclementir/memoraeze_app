@@ -36,6 +36,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     _loadStudySets();
   }
 
+  // Load study sets from shared preferences
   void _loadStudySets() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> setsJson = prefs.getStringList('sets') ?? [];
@@ -61,7 +62,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
         iconTheme: const IconThemeData(color: primaryTextColor),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, color: primaryTextColor),
             onPressed: _handleAddAction,
           ),
         ],
@@ -81,59 +82,14 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
       body: TabBarView(
         controller: _tabController,
         children: [
-          ListView.builder(
-            itemCount: _studySets.length,
-            itemBuilder: (_, index) {
-              return GestureDetector(
-                onTap: () {
-                  List<FlashCard> flashCards = _studySets[index]['terms'].map<FlashCard>((term) {
-                    return FlashCard(
-                      question: term['term'],
-                      answer: term['definition'],
-                      options: term['options'] ?? [],
-                      topic: _studySets[index]['title'],
-                    );
-                  }).toList();
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => NewCard(
-                      topicName: _studySets[index]['title'],
-                      typeOfTopic: 'Study Set',
-                      flashCards: flashCards,
-                    ),
-                  ));
-                },
-                child: FolderBox(
-                  folderName: _studySets[index]['title'],
-                  description: '${_studySets[index]['terms'].length} terms',
-                  descriptionStyle: const TextStyle(color: primaryTextColor, fontSize: 12),
-                  showIcon: false,
-                ),
-              );
-            },
-          ),
-          ListView.builder(
-            itemCount: folders.length,
-            itemBuilder: (_, index) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => FolderDetailsScreen(folderName: folders[index]['name']!),
-                  ));
-                },
-                child: FolderBox(
-                  folderName: folders[index]['name']!,
-                  description: folders[index]['description'],
-                  descriptionStyle: const TextStyle(color: primaryTextColor, fontSize: 12),
-                  showIcon: true,
-                ),
-              );
-            },
-          ),
+          _buildStudySetsView(),
+          _buildFoldersView(),
         ],
       ),
     );
   }
 
+  // Handle the add action based on the current tab
   void _handleAddAction() {
     if (_tabController.index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateSetScreen()));
@@ -142,6 +98,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     }
   }
 
+  // Show the dialog to create a new folder
   void _showFolderDialog() {
     String newFolderName = '';
     String? newFolderDescription;
@@ -183,6 +140,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     );
   }
 
+  // Build a text field widget
   Widget _buildTextField(String hintText, {required void Function(String) onChanged}) {
     return TextField(
       onChanged: onChanged,
@@ -194,6 +152,62 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
       ),
       style: const TextStyle(color: primaryTextColor),
       cursorColor: highlightColor,
+    );
+  }
+
+  // Build the study sets view
+  Widget _buildStudySetsView() {
+    return ListView.builder(
+      itemCount: _studySets.length,
+      itemBuilder: (_, index) {
+        return GestureDetector(
+          onTap: () {
+            List<FlashCard> flashCards = _studySets[index]['terms'].map<FlashCard>((term) {
+              return FlashCard(
+                question: term['term'],
+                answer: term['definition'],
+                options: term['options'] ?? [],
+                topic: _studySets[index]['title'],
+              );
+            }).toList();
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => NewCard(
+                topicName: _studySets[index]['title'],
+                typeOfTopic: 'Study Set',
+                flashCards: flashCards,
+              ),
+            ));
+          },
+          child: FolderBox(
+            folderName: _studySets[index]['title'],
+            description: '${_studySets[index]['terms'].length} terms',
+            descriptionStyle: const TextStyle(color: primaryTextColor, fontSize: 12),
+            showIcon: false,
+          ),
+        );
+      },
+    );
+  }
+
+  // Build the folders view
+  Widget _buildFoldersView() {
+    return ListView.builder(
+      itemCount: folders.length,
+      itemBuilder: (_, index) {
+        return GestureDetector(
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => FolderDetailsScreen(folderName: folders[index]['name']!),
+            ));
+          },
+          child: FolderBox(
+            folderName: folders[index]['name']!,
+            description: folders[index]['description'],
+            descriptionStyle: const TextStyle(color: primaryTextColor, fontSize: 12),
+            showIcon: true,
+          ),
+        );
+      },
     );
   }
 
