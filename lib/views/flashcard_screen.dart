@@ -6,7 +6,10 @@ import 'package:memoraeze_flashcard_app/views/select_folders_screen.dart';
 import 'package:memoraeze_flashcard_app/widgets/flash_card_widget.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:memoraeze_flashcard_app/classes/folder_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+import 'dart:convert';
+import 'package:firebase_database/firebase_database.dart';
 
 class NewCard extends StatefulWidget {
   final String topicName;
@@ -27,6 +30,7 @@ class NewCard extends StatefulWidget {
 class NewCardState extends State<NewCard> {
   late AppinioSwiperController _controller;
   late List<FlashCard> _shuffledFlashCards;
+  final DatabaseReference _database = FirebaseDatabase.instance.reference();
 
   @override
   void initState() {
@@ -156,16 +160,49 @@ class NewCardState extends State<NewCard> {
             ),
             TextButton(
               child: const Text('Delete', style: TextStyle(color: Color.fromARGB(255, 172, 70, 70), fontWeight: FontWeight.bold)),
-              onPressed: () {
-                // Implement the actual deletion logic here
+              onPressed: () async {
+                await _deleteSet();
                 Navigator.of(context).pop(); // Dismiss the dialog after confirming deletion
-                // Navigator.of(context).pop(); // Optionally close the settings modal too
+                Navigator.of(context).pop(); // Close the settings modal too
               },
             ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _deleteSet() async {
+    try {
+      // Remove the set from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      List<String> setsJson = prefs.getStringList('sets') ?? [];
+      List<Map<String, dynamic>> sets = setsJson.map((s) => jsonDecode(s) as Map<String, dynamic>).toList();
+
+      sets.removeWhere((s) => s['title'] == widget.topicName);
+      await prefs.setStringList('sets', sets.map((s) => jsonEncode(s)).toList());
+
+      // Remove the set from Firebase Realtime Database
+      Query query = _database.child('sets').orderByChild('title').equalTo(widget.topicName);
+      DataSnapshot snapshot = await query.get();
+
+      if (snapshot.exists) {
+        Map<String, dynamic> setMap = Map<String, dynamic>.from(snapshot.value as Map<dynamic, dynamic>);
+        setMap.forEach((key, value) async {
+          await _database.child('sets').child(key).remove();
+        });
+      }
+
+      // Show confirmation message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Set deleted successfully!')),
+      );
+    } catch (e) {
+      // Handle any errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting set: $e')),
+      );
+    }
   }
 
   @override

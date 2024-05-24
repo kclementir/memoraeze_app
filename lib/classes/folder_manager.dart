@@ -88,4 +88,58 @@ class FolderManager {
   List<Map<String, dynamic>> getAllSets() {
     return _allSets;
   }
+
+  loadFoldersFromPrefs() {}
+}
+
+List<Map<String, dynamic>> _folders = [];
+
+  List<Map<String, dynamic>> get folderDetails => _folders;
+
+  Future<void> addFolder(String name, {String? description}) async {
+    final folder = {
+      'name': name,
+      'description': description ?? '',
+      'createdAt': DateTime.now().toIso8601String(),
+    };
+    _folders.add(folder);
+    await _saveFoldersToPrefs();
+  }
+
+  Future<void> loadFoldersFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> foldersJson = prefs.getStringList('folders') ?? [];
+    _folders = foldersJson.map((f) => jsonDecode(f) as Map<String, dynamic>).toList();
+  }
+
+  Future<void> _saveFoldersToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> foldersJson = _folders.map((f) => jsonEncode(f)).toList();
+    await prefs.setStringList('folders', foldersJson);
+  }
+
+  Future<void> removeFolder(String name) async {
+    _folders.removeWhere((folder) => folder['name'] == name);
+    await _saveFoldersToPrefs();
+  }
+
+Future<void> _saveNotes() async {
+  final prefs = await SharedPreferences.getInstance();
+  var notes;
+  List<String> notesJson = notes.map((note) => jsonEncode(note)).toList();
+  await prefs.setStringList('notes', notesJson);
+}
+
+Future<void> _saveStudySets() async {
+  final prefs = await SharedPreferences.getInstance();
+  var studySets;
+  List<String> setsJson = studySets.map((set) => jsonEncode(set)).toList();
+  await prefs.setStringList('sets', setsJson);
+}
+
+Future<void> _saveFolders() async {
+  final prefs = await SharedPreferences.getInstance();
+  var folders;
+  List<String> foldersJson = folders.map((folder) => jsonEncode(folder)).toList();
+  await prefs.setStringList('folders', foldersJson);
 }

@@ -8,21 +8,24 @@ import 'package:memoraeze_flashcard_app/views/folder_details_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:logger/logger.dart';
 
-// Initialize the logger
 final logger = Logger();
 
 class LibraryScreen extends StatefulWidget {
-  const LibraryScreen({super.key});
+  final int tabIndex;
+
+  const LibraryScreen({super.key, required this.tabIndex});
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
 
-class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProviderStateMixin {
+class _LibraryScreenState extends State<LibraryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   List<Map<String, dynamic>> _studySets = [];
+  final FolderManager _folderManager = FolderManager();
 
-  List<Map<String, dynamic>> get folders => FolderManager().folderDetails;
+  List<Map<String, dynamic>> get folders => _folderManager.folderDetails;
 
   static const Color appBarColor = Color(0xFF2B4057);
   static const Color primaryTextColor = Color(0xFFC3D1DB);
@@ -32,11 +35,11 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 2, vsync: this, initialIndex: widget.tabIndex);
     _loadStudySets();
+    _loadFolders();
   }
 
-  // Load study sets from shared preferences
   void _loadStudySets() async {
     final prefs = await SharedPreferences.getInstance();
     List<String> setsJson = prefs.getStringList('sets') ?? [];
@@ -47,17 +50,22 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
           return decoded;
         } else {
           logger.w("Data is not in the expected format: $decoded");
-          return <String, dynamic>{}; // Return an empty map to maintain type integrity
+          return <String, dynamic>{};
         }
       }).toList();
     });
+  }
+
+  void _loadFolders() async {
+    await _folderManager.loadFoldersFromPrefs();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Library', style: TextStyle(color: primaryTextColor, fontWeight: FontWeight.bold)),
+        title: const Text('Library', style: TextStyle(color: primaryTextColor)),
         backgroundColor: appBarColor,
         iconTheme: const IconThemeData(color: primaryTextColor),
         actions: [
@@ -89,7 +97,6 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     );
   }
 
-  // Handle the add action based on the current tab
   void _handleAddAction() {
     if (_tabController.index == 0) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateSetScreen()));
@@ -98,7 +105,6 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     }
   }
 
-  // Show the dialog to create a new folder
   void _showFolderDialog() {
     String newFolderName = '';
     String? newFolderDescription;
@@ -128,7 +134,7 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
               onPressed: () {
                 if (newFolderName.isNotEmpty) {
                   setState(() {
-                    FolderManager().addFolder(newFolderName, description: newFolderDescription);
+                    _folderManager.addFolder(newFolderName, description: newFolderDescription);
                   });
                   Navigator.of(context).pop();
                 }
@@ -140,7 +146,6 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     );
   }
 
-  // Build a text field widget
   Widget _buildTextField(String hintText, {required void Function(String) onChanged}) {
     return TextField(
       onChanged: onChanged,
@@ -155,7 +160,6 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     );
   }
 
-  // Build the study sets view
   Widget _buildStudySetsView() {
     return ListView.builder(
       itemCount: _studySets.length,
@@ -189,7 +193,6 @@ class _LibraryScreenState extends State<LibraryScreen> with SingleTickerProvider
     );
   }
 
-  // Build the folders view
   Widget _buildFoldersView() {
     return ListView.builder(
       itemCount: folders.length,

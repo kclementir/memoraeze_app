@@ -7,7 +7,7 @@ import 'package:memoraeze_flashcard_app/views/sets_select_screen.dart';
 class FolderDetailsScreen extends StatefulWidget {
   final String folderName;
 
-  const FolderDetailsScreen({Key? key, required this.folderName}) : super(key: key);
+  const FolderDetailsScreen({super.key, required this.folderName});
 
   @override
   _FolderDetailsScreenState createState() => _FolderDetailsScreenState();

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'login.dart';
+import 'package:memoraeze_flashcard_app/classes/user.dart'; // Import User class
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  User? user;
+
+  ProfileScreen({super.key, this.user});
 
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -14,7 +18,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scaffoldKey.currentState?.openEndDrawer();
+      if (widget.user == null) {
+        _scaffoldKey.currentState?.openEndDrawer();
+      } else {
+        // Update the username if the user has logged in
+        if (widget.user?.username == 'Login') {
+          setState(() {
+            widget.user = widget.user?.copyWith(username: widget.user?.email);
+          });
+        }
+      }
     });
   }
 
@@ -33,73 +46,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).primaryColor,
               ),
-              child: const Text(
-                'Login',
-                style: TextStyle(
+              child: Text(
+                widget.user?.username ?? 'Login',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                 ),
               ),
             ),
-            ListTile(
-              leading: const Icon(Icons.login),
-              title: const Text('Login'),
-              onTap: () {
-                Navigator.pop(context);
-                _showLoginDialog(context);
-              },
-            ),
+            if (widget.user == null)
+              ListTile(
+                leading: const Icon(Icons.login),
+                title: const Text('Login'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  ).then((value) {
+                    if (value is User) {
+                      setState(() {
+                        widget.user = value;
+                      });
+                    }
+                  });
+                },
+              ),
+            if (widget.user != null)
+              ListTile(
+                leading: const Icon(Icons.logout),
+                title: const Text('Logout'),
+                onTap: () {
+                  setState(() {
+                    widget.user = null;
+                  });
+                  Navigator.pop(context);
+                },
+              ),
             // Add more options if needed
           ],
         ),
       ),
-      body: const Center(
-        child: Text('Profile Screen'),
-      ),
-    );
-  }
-
-  void _showLoginDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Login'),
-          content: const SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Username',
-                  ),
-                ),
-                SizedBox(height: 10),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                  ),
-                  obscureText: true,
-                ),
-              ],
+      body: widget.user == null
+          ? const Center(
+              child: Text('Profile Screen'),
+            )
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Welcome, ${widget.user?.username}!'),
+                  const SizedBox(height: 10),
+                  Text('Email: ${widget.user?.email}'),
+                ],
+              ),
             ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Login'),
-              onPressed: () {
-                // Perform login action
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class CreateSetScreen extends StatefulWidget {
   final Map<String, dynamic>? initialSet;
@@ -12,18 +14,25 @@ class CreateSetScreen extends StatefulWidget {
 }
 
 class _CreateSetScreenState extends State<CreateSetScreen> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  List<Map<String, dynamic>> terms = [];
-  late ScrollController _scrollController;
+  final TextEditingController _titleController = TextEditingController(); // Controls the text for the title input field.
+  final TextEditingController _descriptionController = TextEditingController(); // Controls the text for the description input field.
+  List<Map<String, dynamic>> terms = []; // List to store each term and its details.
+  late ScrollController _scrollController; // Controller for scrolling the list of terms.
+  late DatabaseReference _database; // Firebase database reference
 
   @override
   void initState() {
     super.initState();
+    _initializeFirebase();
     _scrollController = ScrollController();
     if (widget.initialSet != null) {
       _initializeSetForEditing();
     }
+  }
+
+  void _initializeFirebase() async {
+    await Firebase.initializeApp();
+    _database = FirebaseDatabase.instance.reference();
   }
 
   @override
@@ -71,7 +80,7 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     return false;
   }
 
-  // Save the set to shared preferences
+  // Save the set to shared preferences and Firebase
   void _saveSet() async {
     if (_titleController.text.isEmpty || terms.isEmpty || _checkEmptyFields()) {
       if (!mounted) return;
@@ -100,8 +109,21 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
     }
 
     await prefs.setStringList('sets', sets.map((s) => jsonEncode(s)).toList());
+
+    // Save the set to Firebase Realtime Database
+    if (widget.initialSet == null) {
+      _database.child('sets').push().set(set);
+    } else {
+      if (widget.initialSet!.containsKey('key')) {
+        String key = widget.initialSet!['key'];
+        _database.child('sets').child(key).set(set);
+      } else {
+        _database.child('sets').push().set(set);
+      }
+    }
+
     if (!mounted) return;
-    Navigator.pop(context);
+    _showSuccessDialog('Saved successfully');
   }
 
   // Show an alert dialog if fields are missing or empty
@@ -117,6 +139,29 @@ class _CreateSetScreenState extends State<CreateSetScreen> {
             TextButton(
               child: const Text('OK', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
               onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show a success dialog
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF2B4057),
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          content: Text(message, style: const TextStyle(color: Color(0xFFC3D1DB))),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK', style: TextStyle(color: Color(0xFF59A6BF), fontWeight: FontWeight.bold)),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Navigate back to the previous screen
+              },
             ),
           ],
         );

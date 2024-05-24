@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1071605821511",
+    "firebase_url": "https://flashcard-app-300e0-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "flashcard-app-300e0",
+    "storage_bucket": "flashcard-app-300e0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1071605821511:android:e50dfa8b5685edba9fc162",
+        "android_client_info": {
+          "package_name": "com.example.memoraeze_flashcard_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZdgopoFQNROcciH0vUZkr0SdXSLf4XBE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

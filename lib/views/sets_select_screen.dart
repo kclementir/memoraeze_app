@@ -4,7 +4,7 @@ import 'package:memoraeze_flashcard_app/classes/folder_manager.dart';
 class AddSetsScreen extends StatefulWidget {
   final String folderName;
 
-  const AddSetsScreen({Key? key, required this.folderName}) : super(key: key);
+  const AddSetsScreen({super.key, required this.folderName});
 
   @override
   _AddSetsScreenState createState() => _AddSetsScreenState();
@@ -29,6 +29,7 @@ class _AddSetsScreenState extends State<AddSetsScreen> {
             appBar: AppBar(
               backgroundColor: const Color(0xFF2B4057),
               title: Text('Add Sets to ${widget.folderName}', style: const TextStyle(color: Colors.white)),
+              iconTheme: const IconThemeData(color: Colors.white),
             ),
             body: const Center(child: CircularProgressIndicator()),
           );
@@ -40,17 +41,20 @@ class _AddSetsScreenState extends State<AddSetsScreen> {
           appBar: AppBar(
             backgroundColor: const Color(0xFF2B4057),
             title: Text('Add Sets to ${widget.folderName}', style: const TextStyle(color: Colors.white)),
+            iconTheme: const IconThemeData(color: Colors.white),
           ),
           body: ListView.builder(
             itemCount: sets.length,
             itemBuilder: (context, index) {
               final set = sets[index];
-              return Card(
-                margin: const EdgeInsets.all(8.0),
-                color: const Color(0xFF102F50),
-                child: ListTile(
-                  title: Text(set['title'], style: const TextStyle(color: Colors.white)),
-                  subtitle: Text('${set['terms'].length} terms', style: const TextStyle(color: Colors.white)),
+              return Dismissible(
+                key: Key(set['title']),
+                background: _buildDismissBackground(),
+                direction: DismissDirection.endToStart,
+                onDismissed: (direction) {
+                  // Optionally handle dismiss
+                },
+                child: GestureDetector(
                   onTap: () {
                     FolderManager().addSetToFolder(
                       widget.folderName,
@@ -82,15 +86,57 @@ class _AddSetsScreenState extends State<AddSetsScreen> {
                       SnackBar(
                         content: Text('Study set ${set['title']} successfully added'),
                         backgroundColor: const Color(0xFF59A6BF),
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
+                  child: FolderBox(
+                    folderName: set['title'],
+                    description: '${set['terms'].length} terms',
+                    descriptionStyle: const TextStyle(color: Color(0xFFC3D1DB), fontSize: 12),
+                    showIcon: false,
+                  ),
                 ),
               );
             },
           ),
         );
       },
+    );
+  }
+
+  // Build dismiss background widget for Dismissible
+  Widget _buildDismissBackground() {
+    return Container(
+      color: Colors.red,
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      child: const Icon(Icons.delete, color: Colors.white, size: 36),
+    );
+  }
+}
+
+class FolderBox extends StatelessWidget {
+  final String folderName;
+  final String? description;
+  final TextStyle? descriptionStyle;
+  final bool showIcon;
+
+  const FolderBox({super.key, required this.folderName, this.description, this.descriptionStyle, this.showIcon = true});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2B4057),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ListTile(
+        leading: showIcon ? const Icon(Icons.folder_outlined, color: Color(0xFFC3D1DB)) : null,
+        title: Text(folderName, style: const TextStyle(color: Color(0xFFC3D1DB))),
+        subtitle: description != null ? Text(description!, style: descriptionStyle ?? const TextStyle(color: Color(0xFFC3D1DB))) : null,
+      ),
     );
   }
 }
