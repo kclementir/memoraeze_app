@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-//import 'package:firebase_core/firebase_core.dart';
 import 'screens/home.dart';
 import 'screens/notes.dart';
 import 'screens/create.dart';
 import 'screens/library.dart';
-import 'screens/profile.dart';
 import 'screens/login.dart'; // Import LoginScreen
-import 'screens/create_account.dart'; // Import CreateAccountScreen
 import 'classes/folder_manager.dart'; // Import the FolderManager
 
 void main() async {
