@@ -58,6 +58,15 @@ class FolderManager {
     _folders.removeWhere((folder) => folder['name'] == folderName);
   }
 
+  void removeSetFromFolder(String folderName, String setTitle) {
+    for (var folder in _folders) {
+      if (folder['name'] == folderName) {
+        folder['sets'].removeWhere((set) => set['title'] == setTitle);
+        break;
+      }
+    }
+  }
+
   bool _isSetInFolder(Map<String, dynamic> folder, String setTitle) {
     for (var set in folder['sets']) {
       if (set['title'] == setTitle) {
